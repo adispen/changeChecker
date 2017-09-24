@@ -1,0 +1,7 @@
+*.pyc
+venv/
+*.swp
+resp.json
+*.bin
+cm_servers.json
+secrets.py
