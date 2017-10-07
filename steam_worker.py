@@ -1,5 +1,4 @@
 import logging
-import gevent
 from binascii import hexlify
 from steam import SteamClient
 from steam.core.msg import MsgProto
@@ -8,6 +7,7 @@ from steam.util import proto_to_dict
 import vdf
 
 LOG = logging.getLogger("Steam Worker")
+
 
 class SteamWorker(object):
     def __init__(self):
@@ -71,7 +71,6 @@ class SteamWorker(object):
             LOG.info("Last logoff: %s", client.user.last_logoff)
             LOG.info("-"*30)
 
-
     def start(self, username, password):
         self.logon_details = {
                 'username': username,
@@ -95,23 +94,27 @@ class SteamWorker(object):
 
         packageids = []
 
-        resp = self.steam.send_job_and_wait(MsgProto(EMsg.ClientPICSProductInfoRequest),
+        resp = self.steam.send_job_and_wait(
+                MsgProto(EMsg.ClientPICSProductInfoRequest),
                 {
                     'apps': map(lambda x: {'appid': x}, appids),
                     'packages': map(lambda x: {'packageid': x}, packageids),
-                    },
+                },
                 timeout=10
                 )
 
-        if not resp: return {}
+        if not resp:
+            return {}
 
         resp = proto_to_dict(resp)
 
         for app in resp.get('apps', []):
-            app['appinfo'] = vdf.loads(app.pop('buffer').rstrip('\x00'))['appinfo']
+            app['appinfo'] = vdf.loads(
+                             app.pop('buffer').rstrip('\x00'))['appinfo']
             app['sha'] = hexlify(app['sha'])
         for pkg in resp.get('packages', []):
-            pkg['appinfo'] = vdf.binary_loads(pkg.pop('buffer')[4:])[str(pkg['packageid'])]
+            pkg['appinfo'] = vdf.binary_loads(
+                             pkg.pop('buffer')[4:])[str(pkg['packageid'])]
             pkg['sha'] = hexlify(pkg['sha'])
 
         return resp['apps'][0]['change_number']
