@@ -5,8 +5,12 @@ from telegram.ext import Updater
 from secrets import telegram_token, telegram_chat_id, steam_username
 import telegram
 import logging
+import dynamo
 
 # Set up logging for server events
+# logging.basicConfig(filename="checking.log", format="%(asctime)s | %(name)s | %(message)s",
+#                    level=logging.INFO)
+
 logging.basicConfig(format="%(asctime)s | %(name)s | %(message)s",
                     level=logging.INFO)
 
@@ -19,7 +23,6 @@ dispatcher = updater.dispatcher
 
 # Set up Telegram bot
 bot = telegram.Bot(token=telegram_token)
-
 
 def alertChat(bot, message):
     """Send a message to the the chat"""
@@ -40,14 +43,12 @@ except:
 
 # Set the changenumber to 0 so that we always get a new change number when
 # starting the service
-changenumber = 0
+changenumber = {}
 
 
 while True:
     """
     Check every second for a new change number.
-    If the server returns nothing, alert the chat and
-    send no messages for 60 seconds.
     If there is a new change number, alert the chat accordingly.
     """
     try:
@@ -56,21 +57,17 @@ while True:
         # Hit the API for a new changenumber
         resp = worker.get_change_number(570)
 
-        # If the server returns nothing, cooldown for 60 seconds
-        if resp == '{}' and changenumber != 0:
-            LOG.info("No response from server, cooling down")
-            msg = "The Dota2 API failed to respond, cooling down."
-            alertChat(bot, msg)
-            time.sleep(60)
-            continue
-
         # If there is a new changenumber, save it and alert the chat
-        if resp != changenumber:
-            LOG.info("New changenumber detected")
-            changenumber = resp
-            msg = "New ChangeNumber for Dota2: " + str(resp)
-            alertChat(bot, msg)
-            LOG.info(msg)
+        if resp and resp != changenumber:
+            LOG.info("Checking most recent from dynamo")
+            mostRecent = dynamo.getMostRecent()
+            if changenumber != mostRecent:
+                LOG.info("New changenumber detected. Previous: " + str(mostRecent))
+                changenumber = resp
+                msg = "New ChangeNumber for Dota2: " + str(resp)
+                alertChat(bot, msg)
+                dynamo.addMostRecent(int(resp))
+                LOG.info(msg)
         time.sleep(1)
 
     # If the user ctrl-c's out, log out of the user account
