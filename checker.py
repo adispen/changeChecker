@@ -43,7 +43,7 @@ except:
 
 # Set the changenumber to 0 so that we always get a new change number when
 # starting the service
-changenumber = {}
+changenumber = 0
 
 
 while True:
@@ -58,16 +58,19 @@ while True:
         resp = worker.get_change_number(570)
 
         # If there is a new changenumber, save it and alert the chat
-        if resp and resp != changenumber:
+        if resp and int(resp) != changenumber:
             LOG.info("Checking most recent from dynamo")
             mostRecent = dynamo.getMostRecent()
-            if changenumber != mostRecent:
+            if int(resp) != mostRecent:
                 LOG.info("New changenumber detected. Previous: " + str(mostRecent))
                 changenumber = resp
                 msg = "New ChangeNumber for Dota2: " + str(resp)
                 alertChat(bot, msg)
                 dynamo.addMostRecent(int(resp))
                 LOG.info(msg)
+            else:
+                if int(resp) == mostRecent:
+                    changenumber = mostRecent
         time.sleep(1)
 
     # If the user ctrl-c's out, log out of the user account

@@ -17,7 +17,7 @@ def getMostRecent():
     if not scanned['Items']:
         return None
     else:
-        return scanned['Items'][0]['changenumber']
+        return int(scanned['Items'][0]['changenumber'])
 
 def addMostRecent(newChangeNum):
     oldChangeNum = getMostRecent()
