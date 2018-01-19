@@ -8,7 +8,6 @@ table = dynamodb.Table(dynamo_table)
 
 def getMostRecent():
     scanned = table.scan(
-        Limit=1,
         Select='SPECIFIC_ATTRIBUTES',
         ProjectionExpression='changenumber, mostRecent',
         FilterExpression=Attr('mostRecent').eq(True)
