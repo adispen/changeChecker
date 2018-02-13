@@ -8,8 +8,8 @@ import logging
 import dynamo
 
 # Set up logging for server events
-# logging.basicConfig(filename="checking.log", format="%(asctime)s | %(name)s | %(message)s",
-#                    level=logging.INFO)
+# logging.basicConfig(filename="checking.log", format="%(asctime)s |
+#                    %(name)s | %(message)s", level=logging.INFO)
 
 logging.basicConfig(format="%(asctime)s | %(name)s | %(message)s",
                     level=logging.INFO)
@@ -23,6 +23,7 @@ dispatcher = updater.dispatcher
 
 # Set up Telegram bot
 bot = telegram.Bot(token=telegram_token)
+
 
 def alertChat(bot, message):
     """Send a message to the the chat"""
@@ -62,7 +63,8 @@ while True:
             LOG.info("Checking most recent from dynamo")
             mostRecent = dynamo.getMostRecent()
             if int(resp) != mostRecent:
-                LOG.info("New changenumber detected. Previous: " + str(mostRecent))
+                LOG.info("New changenumber detected. Previous: " +
+                         str(mostRecent))
                 changenumber = resp
                 msg = "New ChangeNumber for Dota2: " + str(resp)
                 alertChat(bot, msg)
